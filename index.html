@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Zerando a Vida</title>
+<meta name="theme-color" content="#085041">
+<link rel="manifest" href="manifest.json">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div id="app">
+
+  <!-- ===== TELA INICIAL ===== -->
+  <section id="screen-home" class="screen active">
+    <header class="topbar">
+      <h1>Zerando a vida</h1>
+    </header>
+
+    <div class="globe-wrap">
+      <svg width="180" height="180" viewBox="0 0 180 180">
+        <circle cx="90" cy="90" r="72" fill="none" stroke="#3a3a38" stroke-width="10"/>
+        <circle id="progress-ring" cx="90" cy="90" r="72" fill="none" stroke="#1D9E75" stroke-width="10"
+          stroke-linecap="round" stroke-dasharray="452" stroke-dashoffset="452" transform="rotate(-90 90 90)"/>
+        <circle cx="90" cy="90" r="56" fill="#E1F5EE"/>
+        <path d="M 34 78 Q 60 65 90 78 Q 120 91 146 78" fill="none" stroke="#0F6E56" stroke-width="2" opacity="0.5"/>
+        <path d="M 30 100 Q 58 88 90 100 Q 118 112 150 100" fill="none" stroke="#0F6E56" stroke-width="2" opacity="0.5"/>
+        <path d="M 42 120 Q 65 112 90 120 Q 108 126 132 118" fill="none" stroke="#0F6E56" stroke-width="2" opacity="0.5"/>
+        <text id="progress-text" x="90" y="96" text-anchor="middle" font-size="26" font-weight="600" fill="#085041">0%</text>
+      </svg>
+      <p class="subtext">você já descobriu <span id="progress-sub">0%</span> do mundo</p>
+    </div>
+
+    <div class="stats-grid">
+      <div class="stat-card">
+        <span class="icon">🐾</span>
+        <p class="stat-value" id="stat-fauna">0%</p>
+        <p class="stat-label">fauna</p>
+      </div>
+      <div class="stat-card">
+        <span class="icon">🌿</span>
+        <p class="stat-value" id="stat-flora">0%</p>
+        <p class="stat-label">flora</p>
+      </div>
+    </div>
+    <div class="stat-card wide">
+      <span class="icon">📍</span>
+      <p class="stat-value" id="stat-lugares">0% do Brasil explorado</p>
+    </div>
+  </section>
+
+  <!-- ===== TELA CAPTURAR ===== -->
+  <section id="screen-capture" class="screen">
+    <header class="topbar"><h1>Capturar</h1></header>
+
+    <div class="capture-tabs">
+      <button class="tab-btn active" data-tab="fauna">🐾 Fauna</button>
+      <button class="tab-btn" data-tab="flora">🌿 Flora</button>
+    </div>
+
+    <div class="capture-box">
+      <input type="file" id="photo-input" accept="image/*" capture="environment" hidden>
+      <label for="photo-input" class="photo-drop">
+        <img id="photo-preview" hidden>
+        <span id="photo-placeholder">📷 toque para tirar ou escolher uma foto</span>
+      </label>
+
+      <label class="field-label">Nome do animal/planta</label>
+      <input type="text" id="species-input" placeholder="ex: tucano, ipê-amarelo...">
+      <div id="species-suggestions" class="suggestions"></div>
+
+      <button id="btn-save-capture" class="btn-primary">Adicionar à coleção</button>
+      <p id="capture-msg" class="msg"></p>
+    </div>
+  </section>
+
+  <!-- ===== TELA LUGARES ===== -->
+  <section id="screen-places" class="screen">
+    <header class="topbar"><h1>Lugares</h1></header>
+    <button id="btn-checkin" class="btn-primary" style="margin:1rem;">📍 Fazer check-in aqui</button>
+    <p id="places-msg" class="msg"></p>
+    <div id="states-list" class="states-list"></div>
+  </section>
+
+  <!-- ===== TELA COLEÇÃO ===== -->
+  <section id="screen-collection" class="screen">
+    <header class="topbar"><h1>Coleção</h1></header>
+    <div class="capture-tabs">
+      <button class="tab-btn active" data-coltab="fauna">🐾 Fauna</button>
+      <button class="tab-btn" data-coltab="flora">🌿 Flora</button>
+    </div>
+    <div id="collection-list" class="collection-list"></div>
+  </section>
+
+  <!-- ===== NAV INFERIOR ===== -->
+  <nav class="bottom-nav">
+    <button class="nav-btn active" data-screen="home"><span>🏠</span><small>início</small></button>
+    <button class="nav-btn" data-screen="capture"><span>📷</span><small>capturar</small></button>
+    <button class="nav-btn" data-screen="places"><span>📍</span><small>lugares</small></button>
+    <button class="nav-btn" data-screen="collection"><span>📚</span><small>coleção</small></button>
+  </nav>
+
+</div>
+
+<script src="states.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
