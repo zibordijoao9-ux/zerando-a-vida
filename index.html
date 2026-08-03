@@ -67,9 +67,11 @@
         <span id="photo-placeholder">📷 toque para tirar ou escolher uma foto</span>
       </label>
 
-      <label class="field-label">Nome do animal/planta</label>
-      <input type="text" id="species-input" placeholder="ex: tucano, ipê-amarelo...">
-      <div id="species-suggestions" class="suggestions"></div>
+      <label class="field-label">Identificação</label>
+      <div id="identify-result" class="identify-result">
+        <span id="identify-placeholder">aguardando foto...</span>
+      </div>
+      <input type="hidden" id="species-input">
 
       <button id="btn-save-capture" class="btn-primary">Adicionar à coleção</button>
       <p id="capture-msg" class="msg"></p>
@@ -104,6 +106,7 @@
 
 </div>
 
+<script src="config.js"></script>
 <script src="states.js"></script>
 <script src="cities.js"></script>
 <script src="app.js"></script>

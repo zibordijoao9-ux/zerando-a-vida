@@ -4,6 +4,7 @@ const FILES = [
   './index.html',
   './style.css',
   './app.js',
+  './config.js',
   './states.js',
   './cities.js',
   './manifest.json'

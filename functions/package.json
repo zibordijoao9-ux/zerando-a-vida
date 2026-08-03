@@ -1,0 +1,12 @@
+{
+  "name": "functions",
+  "description": "Cloud Functions para o app Zerando a Vida",
+  "engines": { "node": "20" },
+  "main": "index.js",
+  "dependencies": {
+    "firebase-functions": "^6.0.1",
+    "firebase-admin": "^12.0.0",
+    "cors": "^2.8.5"
+  },
+  "private": true
+}

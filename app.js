@@ -69,7 +69,9 @@ document.querySelectorAll('#screen-capture .tab-btn').forEach(btn => {
 const photoInput = document.getElementById('photo-input');
 const photoPreview = document.getElementById('photo-preview');
 const photoPlaceholder = document.getElementById('photo-placeholder');
+const identifyResult = document.getElementById('identify-result');
 let currentPhotoData = null;
+let currentIdentification = null;
 
 photoInput.addEventListener('change', () => {
   const file = photoInput.files[0];
@@ -80,57 +82,80 @@ photoInput.addEventListener('change', () => {
     photoPreview.src = currentPhotoData;
     photoPreview.hidden = false;
     photoPlaceholder.hidden = true;
+    identifySpeciesFromPhoto(currentPhotoData, file.type);
   };
   reader.readAsDataURL(file);
 });
 
-const speciesInput = document.getElementById('species-input');
-const suggestionsBox = document.getElementById('species-suggestions');
-let selectedSpecies = null;
-let searchTimeout = null;
+async function identifySpeciesFromPhoto(dataUrl, mediaType) {
+  currentIdentification = null;
+  identifyResult.innerHTML = '<span class="identify-loading">🔍 identificando...</span>';
 
-speciesInput.addEventListener('input', () => {
-  selectedSpecies = null;
-  clearTimeout(searchTimeout);
-  const q = speciesInput.value.trim();
-  if (q.length < 3) { suggestionsBox.innerHTML = ''; return; }
-  searchTimeout = setTimeout(() => searchSpecies(q), 400);
-});
-
-async function searchSpecies(query) {
-  try {
-    const res = await fetch(`https://api.inaturalist.org/v1/taxa?q=${encodeURIComponent(query)}&locale=pt-BR&per_page=5`);
-    const json = await res.json();
-    suggestionsBox.innerHTML = '';
-    (json.results || []).forEach(taxon => {
-      const div = document.createElement('div');
-      div.className = 'suggestion-item';
-      const commonName = taxon.preferred_common_name || taxon.name;
-      div.innerHTML = `<span>${commonName}</span><span style="color:#888780;font-style:italic">${taxon.name}</span>`;
-      div.addEventListener('click', () => {
-        selectedSpecies = { common: commonName, scientific: taxon.name, id: taxon.id };
-        speciesInput.value = commonName;
-        suggestionsBox.innerHTML = '';
-      });
-      suggestionsBox.appendChild(div);
-    });
-    if (!json.results || json.results.length === 0) {
-      suggestionsBox.innerHTML = '<div class="suggestion-item">nenhum resultado encontrado — pode salvar mesmo assim com o nome digitado</div>';
-    }
-  } catch (err) {
-    suggestionsBox.innerHTML = '<div class="suggestion-item">busca indisponível agora — pode salvar mesmo assim</div>';
+  if (!IDENTIFY_FUNCTION_URL || IDENTIFY_FUNCTION_URL.includes('COLE_AQUI')) {
+    identifyResult.innerHTML = '<span class="identify-error">identificação automática ainda não configurada — veja config.js</span>';
+    return;
   }
+
+  const base64 = dataUrl.split(',')[1];
+
+  try {
+    const res = await fetch(IDENTIFY_FUNCTION_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ imageBase64: base64, mediaType: mediaType || 'image/jpeg', category: currentCaptureTab })
+    });
+    const json = await res.json();
+
+    if (json.error || !json.common_name) {
+      identifyResult.innerHTML = `<span class="identify-error">não conseguimos identificar essa foto. tente outra foto mais nítida, ou toque em "editar manualmente" abaixo.</span>
+        <button type="button" id="btn-manual-edit" class="link-btn">editar manualmente</button>`;
+      document.getElementById('btn-manual-edit').addEventListener('click', showManualInput);
+      return;
+    }
+
+    currentIdentification = json;
+    renderIdentification(json);
+  } catch (err) {
+    identifyResult.innerHTML = `<span class="identify-error">erro ao identificar. tente novamente.</span>
+      <button type="button" id="btn-manual-edit" class="link-btn">editar manualmente</button>`;
+    document.getElementById('btn-manual-edit').addEventListener('click', showManualInput);
+  }
+}
+
+function renderIdentification(result) {
+  const confidenceClass = result.confidence === 'alta' ? 'high' : result.confidence === 'média' ? 'medium' : 'low';
+  identifyResult.innerHTML = `
+    <div class="identify-card">
+      <p class="identify-name">${result.common_name}</p>
+      ${result.scientific_name ? `<p class="identify-scientific">${result.scientific_name}</p>` : ''}
+      <span class="confidence-badge confidence-${confidenceClass}">confiança ${result.confidence}</span>
+      ${result.notes ? `<p class="identify-notes">${result.notes}</p>` : ''}
+      <button type="button" id="btn-manual-edit" class="link-btn">não é isso? editar manualmente</button>
+    </div>`;
+  document.getElementById('btn-manual-edit').addEventListener('click', showManualInput);
+  document.getElementById('species-input').value = result.common_name;
+}
+
+function showManualInput() {
+  identifyResult.innerHTML = `
+    <input type="text" id="manual-species-input" placeholder="digite o nome do animal/planta" value="${currentIdentification ? currentIdentification.common_name : ''}">`;
+  const input = document.getElementById('manual-species-input');
+  input.addEventListener('input', () => {
+    document.getElementById('species-input').value = input.value;
+  });
+  document.getElementById('species-input').value = input.value;
 }
 
 document.getElementById('btn-save-capture').addEventListener('click', () => {
   const msg = document.getElementById('capture-msg');
   if (!currentPhotoData) { msg.textContent = 'tire ou escolha uma foto primeiro'; return; }
-  const name = selectedSpecies ? selectedSpecies.common : speciesInput.value.trim();
-  if (!name) { msg.textContent = 'digite o nome do animal ou planta'; return; }
+  const name = document.getElementById('species-input').value.trim();
+  if (!name) { msg.textContent = 'aguarde a identificação ou edite manualmente o nome'; return; }
 
   const entry = {
     name,
-    scientific: selectedSpecies ? selectedSpecies.scientific : null,
+    scientific: currentIdentification ? currentIdentification.scientific_name : null,
+    notes: currentIdentification ? currentIdentification.notes : null,
     photo: currentPhotoData,
     date: new Date().toISOString()
   };
@@ -146,10 +171,11 @@ document.getElementById('btn-save-capture').addEventListener('click', () => {
 
   msg.textContent = '✅ adicionado à coleção!';
   currentPhotoData = null;
+  currentIdentification = null;
   photoPreview.hidden = true;
   photoPlaceholder.hidden = false;
-  speciesInput.value = '';
-  selectedSpecies = null;
+  identifyResult.innerHTML = '<span id="identify-placeholder">aguardando foto...</span>';
+  document.getElementById('species-input').value = '';
   photoInput.value = '';
 });
 

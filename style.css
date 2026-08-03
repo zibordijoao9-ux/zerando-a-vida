@@ -108,18 +108,37 @@ body {
   display: block; font-size: 11px; color: var(--ink); opacity: 0.6; margin-bottom: 5px;
   text-transform: uppercase; letter-spacing: 0.05em; font-weight: 500;
 }
-#species-input {
-  width: 100%; padding: 10px; border-radius: 4px; border: 1px solid var(--line);
-  background: var(--paper); font-family: var(--font-body); font-size: 15px; margin-bottom: 0.5rem;
-  color: var(--ink);
+.identify-result {
+  min-height: 50px; margin-bottom: 1rem; border-radius: 4px;
+  background: var(--paper); border: 1px solid var(--line); padding: 12px;
 }
-.suggestions { margin-bottom: 1rem; }
-.suggestion-item {
-  padding: 8px 10px; background: var(--paper); border-radius: 4px; margin-bottom: 6px;
-  cursor: pointer; font-size: 13px; display: flex; justify-content: space-between;
-  border: 1px solid var(--line);
+#identify-placeholder, .identify-loading, .identify-error {
+  font-family: var(--font-mono); font-size: 12px; color: var(--forest-light);
 }
-.suggestion-item.selected { background: #d8e8da; }
+.identify-error { color: var(--stamp); display: block; margin-bottom: 8px; }
+.identify-name {
+  font-family: var(--font-display); font-size: 17px; font-weight: 600; color: var(--forest);
+}
+.identify-scientific {
+  font-size: 12px; font-style: italic; color: var(--ink); opacity: 0.6; margin-top: 2px;
+}
+.confidence-badge {
+  display: inline-block; font-family: var(--font-mono); font-size: 10px; text-transform: uppercase;
+  letter-spacing: 0.05em; padding: 3px 8px; border-radius: 999px; margin-top: 8px;
+}
+.confidence-badge.confidence-high { background: #d8e8da; color: var(--forest); }
+.confidence-badge.confidence-medium { background: #f2e2c0; color: var(--gold); }
+.confidence-badge.confidence-low { background: #f2d5c8; color: var(--stamp); }
+.identify-notes { font-size: 12px; margin-top: 8px; opacity: 0.8; }
+.link-btn {
+  display: block; background: none; border: none; font-family: var(--font-body);
+  font-size: 11px; color: var(--forest-light); text-decoration: underline; cursor: pointer;
+  margin-top: 10px; padding: 0;
+}
+#manual-species-input {
+  width: 100%; padding: 8px; border-radius: 4px; border: 1px solid var(--line);
+  background: var(--paper-raised); font-size: 14px;
+}
 
 .btn-primary {
   width: 100%; padding: 12px; background: var(--forest); color: var(--paper-raised); border: none;
