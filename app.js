@@ -5,8 +5,12 @@ const FLORA_TARGET = 50;
 // ===== DADOS (localStorage) =====
 function loadData() {
   const raw = localStorage.getItem('zerando_vida_data');
-  if (raw) return JSON.parse(raw);
-  return { fauna: [], flora: [], states: [] };
+  if (raw) {
+    const parsed = JSON.parse(raw);
+    if (!parsed.cities) parsed.cities = {};
+    return parsed;
+  }
+  return { fauna: [], flora: [], states: [], cities: {} };
 }
 function saveData(data) {
   localStorage.setItem('zerando_vida_data', JSON.stringify(data));
@@ -27,6 +31,13 @@ function showScreen(name) {
 }
 
 // ===== TELA INICIAL =====
+function totalCitiesCount() {
+  return Object.values(data.cities).reduce((sum, arr) => sum + arr.length, 0);
+}
+function totalCitiesTarget() {
+  return Object.values(BRAZIL_CITIES).reduce((sum, arr) => sum + arr.length, 0);
+}
+
 function renderHome() {
   const faunaPct = Math.min(100, Math.round((data.fauna.length / FAUNA_TARGET) * 100));
   const floraPct = Math.min(100, Math.round((data.flora.length / FLORA_TARGET) * 100));
@@ -35,11 +46,12 @@ function renderHome() {
 
   document.getElementById('stat-fauna').textContent = faunaPct + '%';
   document.getElementById('stat-flora').textContent = floraPct + '%';
-  document.getElementById('stat-lugares').textContent = statesPct + '% do Brasil explorado';
+  document.getElementById('stat-lugares').textContent = statesPct + '%';
+  document.getElementById('stat-cidades').textContent = totalCitiesCount();
   document.getElementById('progress-text').textContent = overall + '%';
   document.getElementById('progress-sub').textContent = overall + '%';
 
-  const circumference = 452;
+  const circumference = 478;
   const offset = circumference - (overall / 100) * circumference;
   document.getElementById('progress-ring').style.strokeDashoffset = offset;
 }
@@ -146,10 +158,33 @@ function renderPlaces() {
   const container = document.getElementById('states-list');
   container.innerHTML = '';
   BRAZIL_STATES.forEach(state => {
-    const chip = document.createElement('div');
-    chip.className = 'state-chip' + (data.states.includes(state) ? ' visited' : '');
-    chip.textContent = state;
-    container.appendChild(chip);
+    const visitedState = data.states.includes(state);
+    const cities = BRAZIL_CITIES[state] || [];
+    const visitedCities = data.cities[state] || [];
+
+    const block = document.createElement('div');
+    block.className = 'state-block' + (visitedState ? ' visited' : '');
+
+    const header = document.createElement('div');
+    header.className = 'state-header';
+    header.innerHTML = `<span>${state}</span><span class="badge">${visitedCities.length}/${cities.length} cidades</span>`;
+    header.addEventListener('click', () => block.classList.toggle('open'));
+
+    const cityList = document.createElement('div');
+    cityList.className = 'city-list';
+    cities.forEach(city => {
+      const chip = document.createElement('span');
+      chip.className = 'city-chip' + (visitedCities.includes(city) ? ' visited' : '');
+      chip.textContent = city;
+      cityList.appendChild(chip);
+    });
+    if (cities.length === 0) {
+      cityList.innerHTML = '<span class="city-chip">nenhuma cidade cadastrada ainda</span>';
+    }
+
+    block.appendChild(header);
+    block.appendChild(cityList);
+    container.appendChild(block);
   });
 }
 
@@ -167,14 +202,31 @@ document.getElementById('btn-checkin').addEventListener('click', () => {
         headers: { 'Accept-Language': 'pt-BR' }
       });
       const json = await res.json();
-      const state = json.address && (json.address.state || json.address.region);
+      const addr = json.address || {};
+      const state = addr.state || addr.region;
+      const cityRaw = addr.city || addr.town || addr.municipality || addr.village || '';
+
       if (state && BRAZIL_STATES.includes(state)) {
-        if (!data.states.includes(state)) {
-          data.states.push(state);
-          saveData(data);
-          msg.textContent = `✅ check-in em ${state}!`;
+        const isNewState = !data.states.includes(state);
+        if (isNewState) data.states.push(state);
+
+        const knownCities = BRAZIL_CITIES[state] || [];
+        const matchedCity = knownCities.find(c => c.toLowerCase() === cityRaw.toLowerCase());
+
+        if (!data.cities[state]) data.cities[state] = [];
+        let cityMsg = '';
+        if (matchedCity && !data.cities[state].includes(matchedCity)) {
+          data.cities[state].push(matchedCity);
+          cityMsg = ` e em ${matchedCity}`;
+        } else if (!matchedCity && cityRaw) {
+          cityMsg = ` (cidade "${cityRaw}" ainda não está na nossa base)`;
+        }
+
+        saveData(data);
+        if (isNewState || (matchedCity && cityMsg)) {
+          msg.textContent = `✅ check-in em ${state}${cityMsg}!`;
         } else {
-          msg.textContent = `você já tinha explorado ${state}`;
+          msg.textContent = `você já tinha explorado ${state}${cityMsg}`;
         }
         renderPlaces();
       } else {
@@ -210,7 +262,7 @@ function renderCollection() {
   list.slice().reverse().forEach(entry => {
     const div = document.createElement('div');
     div.className = 'collection-item';
-    div.innerHTML = `<img src="${entry.photo}"><p>${entry.name}</p>`;
+    div.innerHTML = `<img src="${entry.photo}"><span class="stamp-ring">${currentColTab === 'fauna' ? '🐾' : '🌿'}</span><p>${entry.name}</p>`;
     container.appendChild(div);
   });
 }
